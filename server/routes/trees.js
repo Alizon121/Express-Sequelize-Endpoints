@@ -11,7 +11,7 @@ const {Tree} = require('../db/models')
  * INTERMEDIATE BONUS PHASE 1 (OPTIONAL), Step A:
  *   Import Op to perform comparison operations in WHERE clauses
  **/
-// Your code here 
+const {Op} = require('sequelize')
 
 /**
  * BASIC PHASE 1, Step B - List of all trees in the database
@@ -97,21 +97,12 @@ router.post('/', async (req, res, next) => {
     try {
 
         const {name, location, height, size} = req.body
-        // const findTree = await Tree.findOne({
-        //     attributes: [name, location, height, size],
-        //     where : {name: name}
-        // })
-
-        // if (findTree === undefined) {
-        //     if (name !== null) {
             const addTree = await Tree.create({
                 tree: name,
                 location: location,
                 heightFt: height,
                 groundCircumferenceFt: size
             })
-
-
            return res.status(201).json({
                 status: "success",
                 message: "Successfully created new tree",
@@ -148,6 +139,39 @@ router.post('/', async (req, res, next) => {
  */
 router.delete('/:id', async (req, res, next) => {
     try {
+
+        // let treeId = req.params.id;
+
+        // const deletedTree = await Tree.findOne({
+        //     where: {
+        //         id: treeId
+        //     }
+        // })
+
+        // if (!deletedTree) {
+        //     let err = new Error();
+
+        //     err.status = "not-found";
+        //     err.message = `Could not remove tree ${treeId}`
+        //     err.details = "Tree not found"
+
+        //     next(err);
+        // }
+
+        // await deletedTree.destroy();
+
+        const id = req.params.id
+        const deleteTree = await Tree.findByPk(id)
+
+        if (!deleteTree) {
+            next({
+                status: "not-found",
+                message: `Could not remove tree ${id}`,
+                details: "Tree not found"
+            })
+        }
+
+        await deleteTree.destroy()
         res.json({
             status: "success",
             message: `Successfully removed tree ${req.params.id}`,
@@ -197,7 +221,40 @@ router.delete('/:id', async (req, res, next) => {
  */
 router.put('/:id', async (req, res, next) => {
     try {
-        // Your code here 
+        // Your code here
+        const {id, name, location, height, size} = req.body;
+        const tree = await Tree.findByPk(req.params.id)
+
+        if (req.params.id != id) {
+            return res.status(400).json({
+                status:"error",
+                message: "Could not update tree",
+                details: `${req.params.id} does not match ${id}`
+            })
+        }
+        if (!tree) {
+            return res.status(400).json({
+                status:"not-found",
+                message: `Could not update tree ${req.params.id}`,
+                details: "Tree not found"
+            })
+        }
+
+
+        tree.set({
+            tree: name,
+            location: location,
+            heightFt: height,
+            groundCircumferenceFt: size
+        })
+
+        await tree.save()
+        res.json({
+            status: "success",
+            message: "Successfully updated tree",
+            data: tree
+        })
+
     } catch(err) {
         next({
             status: "error",
